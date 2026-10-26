@@ -1,13 +1,13 @@
 import { schoolYears } from '../age/schoolYearCalculator';
 import { gregorianToEra } from '../era/eraConverter';
-import type { BirthInput } from '../parser/types';
+import type { BirthInput, CalendarDate } from '../parser/types';
 import type { TimelineRow } from '../timeline/timelineGenerator';
-import { MAX_YEAR } from '../utils/date';
+import { japaneseDate, MAX_YEAR, today } from '../utils/date';
 import { escapeHTML as e } from '../utils/format';
 import { icon } from './icons';
 
-export function renderTimeline(rows: TimelineRow[]): string {
-  return `<table><caption class="sr-only">出生から100歳までの年齢年表。節目はその年に迎える年齢です。</caption><thead><tr><th scope="col">西暦</th><th scope="col">和暦</th><th scope="col">年齢</th><th scope="col">節目</th></tr></thead><tbody>${rows.map(row => `<tr class="${row.current ? 'current-row' : ''} ${row.future ? 'future-row' : ''}"><th scope="row">${row.year}<small>年</small></th><td>${e(row.era)}</td><td>${e(row.age)}</td><td>${row.current ? '<span class="current-tag">現在</span>' : e(row.label)}${row.future ? '<span class="future-tag">予定</span>' : ''}</td></tr>`).join('')}</tbody></table>`;
+export function renderTimeline(rows: TimelineRow[], current: CalendarDate = today()): string {
+  return `<table><caption class="sr-only">出生から100歳までの年齢年表。節目はその年に迎える年齢です。「現在」は${japaneseDate(current)}の年齢です。</caption><thead><tr><th scope="col">西暦</th><th scope="col">和暦</th><th scope="col">年齢</th><th scope="col">節目</th></tr></thead><tbody>${rows.map(row => `<tr class="${row.current ? 'current-row' : ''} ${row.future ? 'future-row' : ''}"><th scope="row">${row.year}<small>年</small></th><td>${e(row.era)}</td><td>${e(row.age)}</td><td>${row.current ? `<span class="current-tag">現在</span><small class="current-date">${current.month}/${current.day}時点</small>` : e(row.label)}${row.future ? '<span class="future-tag">予定</span>' : ''}</td></tr>`).join('')}</tbody></table>`;
 }
 
 export function renderSchool(birth: BirthInput): string {

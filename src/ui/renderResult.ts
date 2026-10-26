@@ -16,7 +16,7 @@ export function birthEra(birth: BirthInput): string {
 }
 
 export function renderResult(parsed: ParsedInput, reference: CalendarDate, current: CalendarDate): string {
-  if (parsed.type === 'empty') return `<div class="empty-state">${icon('calendar')}<h2>年と年齢を、ひとつの入力で。</h2><p>生年・生年月日・和暦・年齢を入力すると、ここに結果が表示されます。</p></div>`;
+  if (parsed.type === 'empty') return `<div class="empty-state">${icon('calendar')}<h2>生年・生年月日を入力してください</h2><p>西暦・和暦・年齢でも検索できます。例：1998、平成10年、50歳。</p></div>`;
   if (parsed.type === 'error') return `<div class="notice error" role="alert">${icon('info')}<div><strong>入力を確認してください</strong><p>${e(parsed.message)}</p></div></div>`;
   if (parsed.type === 'ambiguous') return `<div class="notice">${icon('info')}<div><strong>「${parsed.value}」はどの意味ですか？</strong><p>年齢か和暦を選んでください。</p><div class="chips">${parsed.suggestions.map(s => `<button type="button" class="chip" data-example="${e(s)}">${e(s)} ${icon('arrow')}</button>`).join('')}</div></div></div>`;
   if (parsed.type === 'age') {
@@ -26,8 +26,12 @@ export function renderResult(parsed: ParsedInput, reference: CalendarDate, curre
   }
   const gregorian = parsed.type === 'date' ? japaneseDate(parsed) : `${parsed.year}年`;
   const era = birthEra(parsed);
-  const age = formatAge(calculateAge(parsed, reference));
-  const currentLabel = parsed.type === 'date' ? `${japaneseDate(reference)}時点` : `${reference.year}年時点`;
+  const ageResult = calculateAge(parsed, reference);
+  const age = formatAge(ageResult);
+  const ageNote = ageResult.type === 'unborn' ? '基準日は生まれる前です。'
+    : parsed.type === 'date' ? '基準日時点の満年齢'
+    : `誕生日が不明なため、${reference.year}年の誕生日前～誕生日後の満年齢を表示しています。`;
+  const currentLabel = `基準日：${japaneseDate(reference)}`;
   const future = parsed.type === 'date' ? compareDates(parsed, current) > 0 : parsed.year > current.year;
   const notes: string[] = [];
   if (parsed.type !== 'date') {
@@ -39,7 +43,7 @@ export function renderResult(parsed: ParsedInput, reference: CalendarDate, curre
   return `<div class="result-card">
     <div class="year-pair"><div class="year-block"><div class="label-row"><span class="muted">西暦</span>${copyButton(gregorian, '西暦をコピー')}</div><div class="gregorian-value">${parsed.year}<span>年</span></div>${parsed.type === 'date' ? `<p class="date-detail">${parsed.month}月${parsed.day}日 生まれ</p>` : '<p class="date-detail">生まれ</p>'}</div>
     <div class="year-block era-block"><div class="label-row"><span class="muted">和暦</span>${copyButton(era, '和暦をコピー')}</div><div class="era-value">${e(era)}</div></div></div>
-    <div class="age-band"><div><div class="age-reference">${currentLabel}</div><div class="age-value">${e(age.replace(/歳$/, ''))}${age.endsWith('歳') ? '<span>歳</span>' : ''}${copyButton(age, '年齢をコピー')}</div><p>${parsed.type === 'date' ? '満年齢' : '誕生日前～誕生日後'}</p></div></div>
+    <div class="age-band"><div><div class="age-reference">${currentLabel}</div><div class="age-value">${e(age.replace(/歳$/, ''))}${age.endsWith('歳') ? '<span>歳</span>' : ''}${copyButton(age, '年齢をコピー')}</div><p>${ageNote}</p></div></div>
     <details class="result-details"><summary>干支を見る</summary><p>生まれ年の干支：<strong>${zodiac(parsed.year)}</strong>（${({ 子: 'ねずみ', 丑: 'うし', 寅: 'とら', 卯: 'うさぎ', 辰: 'たつ', 巳: 'へび', 午: 'うま', 未: 'ひつじ', 申: 'さる', 酉: 'とり', 戌: 'いぬ', 亥: 'いのしし' } as Record<string, string>)[zodiac(parsed.year)]}）</p></details>
     ${notes.length ? `<div class="result-notes">${notes.map(note => `<p>${icon('info')}<span>${e(note)}</span></p>`).join('')}</div>` : ''}
   </div>`;

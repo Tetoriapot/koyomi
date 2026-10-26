@@ -99,8 +99,9 @@ function renderComparisons(): void {
 function updateTimeline(): void {
   if (!birth) return;
   rows = generateTimeline(birth, today(), step);
-  $('timeline').innerHTML = renderTimeline(rows);
-  $('timeline-description').textContent = `${birth.type === 'date' ? japaneseDate(birth) : `${birth.year}年`}生まれの歩み`;
+  $('timeline').innerHTML = renderTimeline(rows, today());
+  $('timeline-description').textContent = `${birth.type === 'date' ? japaneseDate(birth) : `${birth.year}年`}生まれの年齢年表`;
+  $('timeline-reference').textContent = `「現在」は今日（${japaneseDate(today())}）の年齢です。上の基準日を変更しても変わりません。`;
   $('step-10').setAttribute('aria-pressed', String(step === 10));
   $('step-1').setAttribute('aria-pressed', String(step === 1));
 }
@@ -110,6 +111,8 @@ function update(): void {
   birth = null;
   setBirthToolsVisible(false);
   share.disabled = true;
+  $('share-description').hidden = true;
+  $('sample-result-note').hidden = $('sample-indicator').hidden;
   $('clear-input').hidden = !input.value;
   $('reference-error').hidden = true;
   $('input-error').hidden = true;
@@ -120,12 +123,12 @@ function update(): void {
     $('reference-error').textContent = `基準日は${MIN_YEAR}～${MAX_YEAR}年の有効な年月日を入力してください。`;
     $('reference-error').hidden = false;
     referenceInput.setAttribute('aria-invalid', 'true');
-    $<HTMLDetailsElement>('input-options').open = true;
+    $<HTMLDetailsElement>('reference-options').open = true;
     $('reference-summary').textContent = '基準日を確認';
     $('result').innerHTML = '';
     return;
   }
-  $('reference-summary').textContent = `${reference.year}/${reference.month}/${reference.day}`;
+  $('reference-summary').textContent = `${reference.year}/${reference.month}/${reference.day}${toISO(reference) === toISO(today()) ? '（今日）' : ''}`;
   parsed = parseInput(input.value);
   input.setAttribute('aria-invalid', String(parsed.type === 'error'));
   if (parsed.type === 'error') {
@@ -141,6 +144,10 @@ function update(): void {
     $('school').innerHTML = renderSchool(birth);
   }
   share.disabled = !(birth || parsed.type === 'age');
+  if (!share.disabled) {
+    $('share-description').textContent = `入力「${input.value}」と基準日（${japaneseDate(reference)}）をURLに含めます。複数人の比較は含みません。`;
+    $('share-description').hidden = false;
+  }
 }
 
 function setBirthToolsVisible(visible: boolean): void {
